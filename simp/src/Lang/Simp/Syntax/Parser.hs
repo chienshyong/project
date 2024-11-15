@@ -13,6 +13,10 @@ newtype PEnv = PEnv {
     toks :: [LToken]
 }
 
+instance Show PEnv where
+    show (PEnv tokens) = "PEnv { tokens = " ++ show tokens ++ " }"
+
+
 -- | check whether the parsing is done based on the list of tokens left. 
 done :: PEnv -> Bool
 done penv = null $ toks penv
@@ -121,26 +125,126 @@ pWhile = do
 
 -- | the `pSpace` function parses / skips a space token
 pSpace :: Parser PEnv LToken 
-pSpace = undefined -- fixme
+pSpace = sat (\tok -> case tok of 
+    { WhiteSpace _ _ -> True 
+    ; _ -> False 
+    }) "expecting a whitespace but none is found."
 
 
 -- | the `pSpaces` function parses / skips zero or more space tokens
 pSpaces :: Parser PEnv [LToken]
-pSpaces = undefined -- fixme
+pSpaces = many pSpace
 
 -- Lab 1 Task 1.1 end 
-
 
 {-  Lab 1 Task 1.2 
     Parsing an expression
     Note that 
-    E ::= E Op E | X | C | (E) contains left recursion
--}
+    E ::= E Op E | X (variable) | C (constant) | (E) contains left recursion
 
+    E = (E)E'
+    E = XE'
+    E = CE'
+    E' = LOp E E'
+    E' = Epsilon
+    LOp = LPlus | LMinus | LMult | LLThan | LDEqual
+-}
 
 -- | the `pExp` function parses an expression
 pExp :: Parser PEnv Exp 
-pExp = undefined -- fixme
+pExp = do
+    ele <- pLExp
+    return (fromLExp ele)
+
+pLExp :: Parser PEnv LExp
+pLExp = choice pLExpBracket (choice pLExpX pLExpC)
+
+-- E = (E)E'
+pLExpBracket :: Parser PEnv LExp 
+pLExpBracket = do
+    pLParen
+    pSpaces
+    le <- pLExp
+    pSpaces
+    pRParen
+    lep <- pLExpPrime
+    return (LExpParantheses le lep)
+
+-- E = XE'
+pLExpX :: Parser PEnv LExp  --Parse LeftRecursionEliminated Expression of X (Var)
+pLExpX = do
+    v <- pVar
+    lep <- pLExpPrime
+    return (LExpVar v lep)
+
+-- E = CE'
+pLExpC :: Parser PEnv LExp 
+pLExpC = do
+    c <- pConst
+    lep <- pLExpPrime
+    return (LExpConst c lep)
+
+pLExpPrime :: Parser PEnv LExpPrime 
+pLExpPrime = do
+    pSpaces
+    choice pLExpPrimeOp pLExpPrimeEpsilon
+
+-- E' = LOp E E'
+pLExpPrimeOp :: Parser PEnv LExpPrime 
+pLExpPrimeOp = do
+    lop <- choice pLPlus (choice pLDEqual (choice pLLThan (choice pLMinus pLMult)))
+    pSpaces
+    le <- pLExp
+    lep <- pLExpPrime
+    return (LExpOp lop le lep)
+
+-- E' = Epsilon
+pLExpPrimeEpsilon :: Parser PEnv LExpPrime 
+pLExpPrimeEpsilon = return Eps
+
+-- LOp = LPlus
+pLPlus :: Parser PEnv LOp
+pLPlus = do
+    pPlus
+    return LPlus
+
+-- LOp = LMinus
+pLMinus :: Parser PEnv LOp
+pLMinus = do
+    pMinus
+    return LMinus
+
+-- LOp = LMult
+pLMult :: Parser PEnv LOp
+pLMult = do
+    pMult
+    return LMult
+
+-- LOp = LLThan
+pLLThan :: Parser PEnv LOp
+pLLThan = do
+    pLThan
+    return LLThan
+
+-- LOp = LDEqual
+pLDEqual :: Parser PEnv LOp
+pLDEqual = do
+    pDEqual
+    return LDEqual
+
+fromLExp :: LExp -> Exp
+fromLExp (LExpParantheses le lep) = fromLExpPrime (ParenExp (fromLExp le)) lep
+fromLExp (LExpVar var lep) = fromLExpPrime (VarExp var) lep
+fromLExp (LExpConst const lep) = fromLExpPrime (ConstExp const) lep
+
+fromLExpPrime :: Exp -> LExpPrime -> Exp
+fromLExpPrime e1 Eps = e1
+fromLExpPrime e1 (LExpOp LPlus le lep) = fromLExpPrime (Plus e1 (fromLExp le)) lep
+fromLExpPrime e1 (LExpOp LMinus le lep) = fromLExpPrime (Minus e1 (fromLExp le)) lep
+fromLExpPrime e1 (LExpOp LMult le lep) = fromLExpPrime (Mult e1 (fromLExp le)) lep
+fromLExpPrime e1 (LExpOp LLThan le lep) = fromLExpPrime (LThan e1 (fromLExp le)) lep
+fromLExpPrime e1 (LExpOp LDEqual le lep) = fromLExpPrime (DEqual e1 (fromLExp le)) lep
+
 -- Lab 1 Task 1.2 end 
 
 

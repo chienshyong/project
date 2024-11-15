@@ -31,3 +31,20 @@ data Exp = Plus Exp Exp -- ^ The constructor for a plus expression e1 + e2
 data Const = IntConst Int   -- ^ The constructor for an integer constant 
     | BoolConst Bool        -- ^ The constructor for a boolean constant
     deriving (Show, Eq) 
+
+{-  Lab 1 Task 1.2 
+    Parsing an expression
+    Note that 
+    E ::= E Op E | X (variable) | C (constant) | (E) contains left recursion
+
+    E = (E)E'
+    E = XE'
+    E = CE'
+    E' = Op E E'
+    E' = Epsilon
+-}
+-- | Additional abstract syntax tree
+-- L stands for LeftRecursionEliminated
+data LExp = LExpParantheses LExp LExpPrime | LExpVar Var LExpPrime | LExpConst Const LExpPrime
+data LExpPrime = LExpOp LOp LExp LExpPrime | Eps 
+data LOp = LPlus | LMinus | LMult | LLThan | LDEqual

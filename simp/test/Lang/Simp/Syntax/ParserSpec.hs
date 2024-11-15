@@ -65,6 +65,20 @@ spec = do
                 ; Empty (Failed err)                     -> expectationFailure err
                 } 
 
+        it "pExp: parsing x + 1" $ 
+            let input = [ IdTok (SrcLoc 1 1) "x", WhiteSpace (SrcLoc 1 2) ' ', 
+                            PlusSign (SrcLoc 1 3), WhiteSpace (SrcLoc 1 4) ' ', 
+                            IntTok (SrcLoc 1 5) 1] 
+                expected = Plus (VarExp (Var "x")) (ConstExp (IntConst 1))
+                penv = PEnv input
+            in case run pExp penv of 
+                { Consumed (Ok (exp, penv)) | done penv -> exp `shouldBe` expected
+                                            | otherwise -> expectationFailure $ "parsing failed, the remaining token stream is not empty: " ++ show penv ++ " Parse: " ++ show exp
+                ; Consumed (Failed err)                 -> expectationFailure err
+                ; Empty (Ok (exp, penv))                -> expectationFailure "parsing failed, no token has been consumed."
+                ; Empty (Failed err)                    -> expectationFailure err
+                } 
+
         it "pExp: parsing x - (1 + (y * 2))" $ 
             let input = [ IdTok (SrcLoc 1 1) "x", WhiteSpace (SrcLoc 1 2) ' ', 
                             MinusSign (SrcLoc 1 3), WhiteSpace (SrcLoc 1 4) ' ', 
@@ -77,7 +91,7 @@ spec = do
                 penv = PEnv input
             in case run pExp penv of 
                 { Consumed (Ok (exp, penv)) | done penv -> exp `shouldBe` expected
-                                            | otherwise -> expectationFailure "parsing failed, the remaining token stream is not empty."
+                                            | otherwise -> expectationFailure $ "parsing failed, the remaining token stream is not empty: " ++ show penv
                 ; Consumed (Failed err)                 -> expectationFailure err
                 ; Empty (Ok (exp, penv))                -> expectationFailure "parsing failed, no token has been consumed."
                 ; Empty (Failed err)                    -> expectationFailure err
@@ -94,7 +108,7 @@ spec = do
                 penv = PEnv input 
             in case run parser penv of 
                 { Consumed (Ok (stmts, penv)) | done penv -> stmts `shouldBe` expected
-                                              | otherwise -> expectationFailure "parsing failed, the remaining token stream is not empty."
+                                              | otherwise -> expectationFailure $ "parsing failed, the remaining token stream is not empty: " ++ show penv
                 ; Consumed (Failed err)                   -> expectationFailure err
                 ; Empty (Ok (exp, penv))                  -> expectationFailure "parsing failed, no token has been consumed."
                 ; Empty (Failed err)                      -> expectationFailure err
