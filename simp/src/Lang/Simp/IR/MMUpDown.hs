@@ -27,6 +27,7 @@ GE(e) |- (up_e, down_e)
 GE((e)) |- (up_e, down_e)
 -} 
 cogenExp (ParenExp e) = cogenExp e
+
 -- Lab 1 Task 2.1 
 {-
 GE(e1) |- (up_e1, down_e1)
@@ -36,11 +37,41 @@ L is a fresh label
 --------------------------------------------------------------------- (Op)
 GE(e1 op e2) |- (X, down_e1 ++ down_e2 ++ [L:X <- up_e1 op up_e2])
 -}
-cogenExp (Plus e1 e2)   = undefined -- fixme
-cogenExp (Minus e1 e2)  = undefined -- fixme
-cogenExp (Mult e1 e2)   = undefined -- fixme
-cogenExp (DEqual e1 e2) = undefined -- fixme
-cogenExp (LThan e1 e2)  = undefined -- fixme
+cogenExp (Plus e1 e2)   = do
+    (up_e1, down_e1) <- cogenExp e1
+    (up_e2, down_e2) <- cogenExp e2    
+    l <- newLabel
+    x <- newTemp
+    return (x, down_e1 ++ down_e2 ++ [(l, IPlus x up_e1 up_e2)])
+
+cogenExp (Minus e1 e2)  = do
+    (up_e1, down_e1) <- cogenExp e1
+    (up_e2, down_e2) <- cogenExp e2    
+    l <- newLabel
+    x <- newTemp
+    return (x, down_e1 ++ down_e2 ++ [(l, IMinus x up_e1 up_e2)])
+
+cogenExp (Mult e1 e2)   = do
+    (up_e1, down_e1) <- cogenExp e1
+    (up_e2, down_e2) <- cogenExp e2 
+    l <- newLabel
+    x <- newTemp   
+    return (x, down_e1 ++ down_e2 ++ [(l, IMult x up_e1 up_e2)])
+
+cogenExp (DEqual e1 e2) = do
+    (up_e1, down_e1) <- cogenExp e1
+    (up_e2, down_e2) <- cogenExp e2 
+    l <- newLabel
+    x <- newTemp   
+    return (x, down_e1 ++ down_e2 ++ [(l, IDEqual x up_e1 up_e2)])
+
+cogenExp (LThan e1 e2)  = do
+    (up_e1, down_e1) <- cogenExp e1
+    (up_e2, down_e2) <- cogenExp e2  
+    l <- newLabel
+    x <- newTemp  
+    return (x, down_e1 ++ down_e2 ++ [(l, ILThan x up_e1 up_e2)])
+
 -- Lab 1 Task 2.1 end
 
 
@@ -145,7 +176,16 @@ instance Cogen Stmt where
         G(while cond {body}) |- down_cond ++ instrs1 ++ instrs2'
         
 -}
-        ; While cond body -> undefined -- fixme
+        ; While cond body -> do
+            lblBWhile               <- chkNextLabel
+            (up_cond, down_cond)    <- cogenExp cond
+            lblWhileCondJ           <- newLabel
+            instrs2                 <- cogen body
+            lblEndBody              <- newLabel
+            lblEndWhile             <- chkNextLabel
+            let instrs1 = [(lblWhileCondJ, IIfNot up_cond lblEndWhile)]
+                instrs2' = instrs2 ++ [(lblEndBody, IGoto lblBWhile)]
+            return $ down_cond ++ instrs1 ++ instrs2'
         }
 -- Lab 1 Task 2.2 end
         
