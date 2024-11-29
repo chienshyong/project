@@ -60,7 +60,22 @@ class Substitutable a where
 -- | apply type subst to an extended type
 -- Lab 2 Task 2.1
 instance Substitutable ExType where
-    applySubst = undefined  -- fixme
+    applySubst Empty a = a
+
+    applySubst (RevComp (a, MonoType tHat) Empty) (TypeVar b) = --[int/a]b or [int/a]a
+        if a == b
+            then MonoType tHat
+            else TypeVar b 
+    applySubst (RevComp (a, TypeVar tHat) Empty) (TypeVar b) = --[c/a]b
+        if a == b
+            then TypeVar tHat
+            else TypeVar b
+    applySubst (RevComp _ Empty) (MonoType b) = MonoType b --[int/a]bool
+
+    applySubst (RevComp r1 r2) a = --composition
+        let c1 = applySubst (RevComp r1 Empty) a
+            c2 = applySubst r2 c1
+        in c2
 -- Lab 2 Task 2.1 end
 
 instance (Substitutable a, Substitutable b) => Substitutable (a,b) where
