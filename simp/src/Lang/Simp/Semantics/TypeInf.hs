@@ -104,8 +104,16 @@ instance Infer Stmt where
             (exTy, k) -> DS.insert (alphax, exTy) k
     infer (Ret x)           = DS.empty 
     -- Lab 2 Task 2.3
-    infer (While cond b)    = undefined -- fixme 
-    infer (If cond th el)   = undefined -- fixme
+    infer (While cond b)    = 
+        let (exTy, k1) = inferExp cond
+            k2 = infer b
+        in DS.insert (exTy, MonoType BoolTy) (DS.union k1 k2)
+
+    infer (If cond th el)   = 
+        let (exTy, k1) = inferExp cond
+            k2 = infer th
+            k3 = infer el
+        in DS.insert (exTy, MonoType BoolTy) (DS.union k1 (DS.union k2 k3))
     -- Lab 2 Task 2.3 end 
 
 
