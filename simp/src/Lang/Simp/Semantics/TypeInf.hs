@@ -150,17 +150,27 @@ inferExp (LThan e1 e2)              =
 class Unifiable a where
     mgu :: a -> Either String TypeSubst
 
-
 -- | unify two extypes 
 -- Lab 2 Task 2.2 
 instance Unifiable (ExType,ExType) where
-    mgu (exTy1, exTy2) = Left ("error: unable to unify " ++ show exTy1 ++ " with " ++ show exTy2) -- fixme
-
+    mgu (MonoType IntTy, MonoType IntTy) = Right Empty
+    mgu (MonoType BoolTy, MonoType BoolTy) = Right Empty
+    mgu (exTy, TypeVar b) = Right (RevComp (b, exTy) Empty)
+    mgu (TypeVar b, exTy) = Right (RevComp (b, exTy) Empty)
+    mgu (exTy1, exTy2) = Left ("error: unable to unify " ++ show exTy1 ++ " with " ++ show exTy2)
 
 -- | unifying a list of unifaibles
 instance (Unifiable a, Substitutable a) => Unifiable [a] where
     mgu []      = Right Empty 
-    mgu (x:xs)  = undefined -- fixme 
+    mgu (x:xs)  =
+        case mgu x of
+            Left err    -> Left err
+            Right Empty -> mgu xs
+            Right (RevComp r1 Empty) -> 
+                case mgu (map (applySubst (RevComp r1 Empty)) xs) of
+                    Left err      -> Left err
+                    Right typeSubsts -> Right (RevComp r1 typeSubsts)
+                
 -- Lab 2 Task 2.2 end
 
 
