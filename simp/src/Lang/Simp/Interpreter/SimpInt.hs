@@ -38,8 +38,12 @@ evalExp dlt (Plus e1 e2)    = do
     c2 <- evalExp dlt e2
     plusConst c1 c2
 -- Lab 2 Task 1.1 
-evalExp dlt (VarExp v)      = undefined -- fixme
-evalExp dlt (ParenExp e)    = undefined -- fixme
+evalExp dlt (VarExp v)      =
+    case DM.lookup v dlt of
+        Nothing -> Left ("error: trying to access an uninitialized var.")
+        Just v  -> Right v 
+
+evalExp dlt (ParenExp e)    = evalExp dlt e
 -- Lab 2 Task 1.1 end
 
 
@@ -52,7 +56,9 @@ class Evaluable a where
 instance Evaluable a => Evaluable [a] where
     eval dlt [] = Right dlt
     -- Lab 2 Task 1.2 
-    eval dlt (x:xs) = undefined -- fixme 
+    eval dlt (x:xs) = do
+        dlt2 <- eval dlt x
+        eval dlt2 xs
     -- Lab 2 Task 1.2 end
 
 
@@ -70,7 +76,13 @@ instance Evaluable Stmt where
                 | otherwise -> eval dlt el
     eval dlt (Ret x)        = Right dlt
     -- Lab 2 Task 1.2 
-    eval dlt (While cond s) = undefined -- fixme
+    eval dlt (While cond s) = do
+        c <- evalExp dlt cond
+        case c of
+            BoolConst True  -> do 
+                dlt2 <- eval dlt s
+                eval dlt2 (While cond s)
+            BoolConst False -> Right dlt
     -- Lab 2 Task 1.2 end 
 
 
