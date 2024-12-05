@@ -20,7 +20,7 @@ type AbstractEnv = DM.Map Label AbstractState
 -- Lab 3 Task 2.1 
 -- | join(s) = \sqbigcup_{t \in succ(s)} t
 join :: [AbstractState] -> AbstractState
-join = undefined -- fixme 
+join = foldl DS.union DS.empty
 -- Lab 3 Task 2.1 end
 
 
@@ -38,17 +38,70 @@ genMonotoneFunction p =
                     Nothing -> [DS.empty]
                     Just value -> [value]) succs
             in join succsStates
+
         -- Lab 3 Task 2.2 
         instrState :: AbstractEnv -> LabeledInstr -> Either String AbstractEnv
         -- ^ case l:t <- src:   s_l = join(s_l) - {t} \cup vars(src)
         instrState acc (label, IMove (Temp (AVar t)) src) = do
             let joinedSuccStates = joinSuccStates label acc
             return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src))) acc)
+
+        instrState acc (label, IMove (Regstr _) src) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src))) acc)
+
         -- ^ case l: t <- src1 op src2:  s_l = join(s_l) - {t} \cup vars(src1) \cup vars(src2)
+        instrState acc (label, IPlus (Temp (AVar t)) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IMinus (Temp (AVar t)) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IMult (Temp (AVar t)) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IDEqual (Temp (AVar t)) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, ILThan (Temp (AVar t)) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label ((DS.delete t joinedSuccStates) `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
         -- ^ case l: r <- src1 op src2:  s_l = join(s_l) \cup vars(src1) \cup vars(src2)
+        instrState acc (label, IPlus (Regstr _) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IMinus (Regstr _) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IMult (Regstr _) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, IDEqual (Regstr _) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)
+
+        instrState acc (label, ILThan (Regstr _) src1 src2) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList (vars src1) `DS.union` DS.fromList (vars src2))) acc)     
+
         -- ^ case l: ifn t goto l':  s_l = join(s_l) \cup {t}
+        instrState acc (label, IIfNot (Temp (AVar t)) lbl) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label (joinedSuccStates `DS.union` (DS.fromList [t])) acc)
+
         -- ^ other cases: s_l = join(s_l)
-        instrState acc (label, instr) = undefined -- fixme 
+        instrState acc (label, _) = do
+            let joinedSuccStates = joinSuccStates label acc
+            return (DM.insert label joinedSuccStates acc)
+
         -- Lab 3 Task 2.2 end 
    
     in \absEnv -> foldM instrState absEnv p
