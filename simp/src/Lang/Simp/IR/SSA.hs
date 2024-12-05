@@ -4,6 +4,7 @@ import qualified Data.Map as DM
 import qualified Data.Set as DS
 import Control.Monad
 import Data.List
+import qualified Data.List as List
 import Lang.Simp.IR.PseudoAssembly
 import Lang.Simp.IR.CFG
 import Lang.Simp.IR.DF
@@ -39,22 +40,53 @@ type E = DM.Map Label [String]
 -- | the P environment: mapping a label l to a SSA labeld instruction
 type P = DM.Map Label SSALabeledInstr
 
+-- | Combine DFTable and labelsModdedVars into E.
+generateE :: DFTable -> [(Label, [String])] -> DM.Map Label [String]
+generateE dft labelsModdedVars =
+    let
+        -- Convert labelsModdedVars to a Map for easy lookup
+        labelsModdedVarsMap :: DM.Map Label [String]
+        labelsModdedVarsMap = foldl (\acc (label, vars) -> DM.insertWith (++) label vars acc) DM.empty labelsModdedVars
 
--- | generatae a raw SSA program from a Peudo Assembly program pa, variables are yet to be renamed. 
+        -- Populate E environment
+        e :: DM.Map Label [String]
+        e = foldl insertEntries DM.empty (DM.toList dft)
+
+        -- Helper to process each DFTable entry
+        insertEntries :: DM.Map Label [String] -> (Label, [Label]) -> DM.Map Label [String]
+        insertEntries acc (label, _) =
+            let dfP = dfPlus dft label
+            in foldl
+                (\env l ->
+                    let vars = DM.lookup label labelsModdedVarsMap
+                    in case vars of
+                        Just vars -> DM.insertWith (++) l vars env
+                        Nothing -> env)
+                acc
+                dfP
+    in
+        DM.map (List.nub . List.sort) e --Sort and remove duplicates
+
+-- | generaate a raw SSA program from a Pseudo Assembly program pa, variables are yet to be renamed. 
 insertPhis :: [LabeledInstr] -> DFTable -> CFG -> P
 insertPhis pa dft g =
         -- a list of pairs. Each pair consists of a label l and the set of variables that are modified in l
     let labelsModdedVars :: [(Label, [String])]
         labelsModdedVars = map modVars pa
+
         -- Lab 3 Task 1.2 TODO 
         e :: E
-        e = undefined -- fixme
+        e = generateE dft labelsModdedVars
+
         -- Lab 3 Task 1.2 TODO 
         paWithPhis :: [SSALabeledInstr]
         paWithPhis = map (\ (l,i) -> case DM.lookup l e of
             { Nothing   -> (l, [], i)
             ; Just vars ->
-                let phis = undefined -- fixme
+                --let phis = vars.map(x => x <- phi( k:x | (k in pred(l,G))))
+                let preds = predecessors g l --[Label]
+                    phis = map (\ varToRename -> PhiAssignment (Temp (AVar varToRename)) (map (\p -> (p, AVar varToRename)) preds) (Temp (AVar varToRename))) vars
+                
                 in (l, phis, i)
             }) pa
         -- Lab 3 Task 1.2 END

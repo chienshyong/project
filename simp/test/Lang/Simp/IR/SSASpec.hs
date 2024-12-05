@@ -6,12 +6,190 @@ import Lang.Simp.IR.PseudoAssembly
 import Lang.Simp.IR.CFG
 import Lang.Simp.IR.Util
 import Lang.Simp.IR.SSA
+import Lang.Simp.IR.DF
 import qualified Data.Map as DM
 
 spec :: Spec
 spec = do
     describe "ssa" $ do
 
+        it "dfplus" $ 
+            let input = Temp (AVar "input")
+                x     = Temp (AVar "x") 
+                f     = Temp (AVar "f")
+                s     = Temp (AVar "s")
+                c     = Temp (AVar "c")
+                b     = Temp (AVar "b")
+                i     = Temp (AVar "i")
+                j     = Temp (AVar "j")
+                t     = Temp (AVar "t")
+                r     = Temp (AVar "r")
+                r_ret = Regstr "_r_ret"
+                pa = [
+                        (1, IMove x input),
+                        (2, IMove r (IntLit 0)),
+                        (3, IMove i (IntLit 0)),
+                        (4, ILThan b i x),
+                        (5, IIfNot b 20),
+                        (6, IMove f (IntLit 0)),
+                        (7, IMove s (IntLit 1)),
+                        (8, IMove j (IntLit 0)),
+                        (9, IMove t (IntLit 0)),
+                        (10, ILThan b j i),
+                        (11, IIfNot b 17),
+                        (12, IMove t f),
+                        (13, IMove f s),
+                        (14, IPlus s t f),
+                        (15, IPlus j j (IntLit 1)),
+                        (16, IGoto 10),
+                        (17, IPlus r r s),
+                        (18, IPlus i i (IntLit 1)),
+                        (19, IGoto 4),
+                        (20, IMove r_ret r),
+                        (21, IRet) ]
+                cfg = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), 
+                            (5 , [6, 20]), (6 , [7]), (7 , [8]), (8 , [9]), 
+                            (9 , [10]), (10 , [11]), (11 , [12, 17]), (12, [13]), 
+                            (13, [14]), (14, [15]), (15, [16]), (16, [10]),
+                            (17, [18]), (18, [19]), (19, [4]), (20, [21])]
+                dft = DM.fromList [(1,[]),(2,[]),(3,[]),(4,[4]),(5,[4]),(6,[4]),(7,[4]),(8,[4]),(9,[4]),(10,[4,10]),(11,[4,10]),(12,[10]),(13,[10]),(14,[10]),(15,[10]),(16,[10]),(17,[4]),(18,[4]),(19,[4]),(20,[]),(21,[])]
+                expected = [4]
+                result = dfPlus dft 4
+            in result `shouldBe` expected
+
+        it "dfplus" $ 
+            let input = Temp (AVar "input")
+                x     = Temp (AVar "x") 
+                f     = Temp (AVar "f")
+                s     = Temp (AVar "s")
+                c     = Temp (AVar "c")
+                b     = Temp (AVar "b")
+                i     = Temp (AVar "i")
+                j     = Temp (AVar "j")
+                t     = Temp (AVar "t")
+                r     = Temp (AVar "r")
+                r_ret = Regstr "_r_ret"
+                pa = [
+                        (1, IMove x input),
+                        (2, IMove r (IntLit 0)),
+                        (3, IMove i (IntLit 0)),
+                        (4, ILThan b i x),
+                        (5, IIfNot b 20),
+                        (6, IMove f (IntLit 0)),
+                        (7, IMove s (IntLit 1)),
+                        (8, IMove j (IntLit 0)),
+                        (9, IMove t (IntLit 0)),
+                        (10, ILThan b j i),
+                        (11, IIfNot b 17),
+                        (12, IMove t f),
+                        (13, IMove f s),
+                        (14, IPlus s t f),
+                        (15, IPlus j j (IntLit 1)),
+                        (16, IGoto 10),
+                        (17, IPlus r r s),
+                        (18, IPlus i i (IntLit 1)),
+                        (19, IGoto 4),
+                        (20, IMove r_ret r),
+                        (21, IRet) ]
+                cfg = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), 
+                            (5 , [6, 20]), (6 , [7]), (7 , [8]), (8 , [9]), 
+                            (9 , [10]), (10 , [11]), (11 , [12, 17]), (12, [13]), 
+                            (13, [14]), (14, [15]), (15, [16]), (16, [10]),
+                            (17, [18]), (18, [19]), (19, [4]), (20, [21])]
+                dft = DM.fromList [(1,[]),(2,[]),(3,[]),(4,[4]),(5,[4]),(6,[4]),(7,[4]),(8,[4]),(9,[4]),(10,[4,10]),(11,[4,10]),(12,[10]),(13,[10]),(14,[10]),(15,[10]),(16,[10]),(17,[4]),(18,[4]),(19,[4]),(20,[]),(21,[])]
+                expected = [4,10]
+                result = dfPlus dft 10
+            in result `shouldBe` expected
+
+        it "dfplus" $ 
+            let input = Temp (AVar "input")
+                x     = Temp (AVar "x") 
+                f     = Temp (AVar "f")
+                s     = Temp (AVar "s")
+                c     = Temp (AVar "c")
+                b     = Temp (AVar "b")
+                i     = Temp (AVar "i")
+                j     = Temp (AVar "j")
+                t     = Temp (AVar "t")
+                r     = Temp (AVar "r")
+                r_ret = Regstr "_r_ret"
+                pa = [
+                        (1, IMove x input),
+                        (2, IMove r (IntLit 0)),
+                        (3, IMove i (IntLit 0)),
+                        (4, ILThan b i x),
+                        (5, IIfNot b 20),
+                        (6, IMove f (IntLit 0)),
+                        (7, IMove s (IntLit 1)),
+                        (8, IMove j (IntLit 0)),
+                        (9, IMove t (IntLit 0)),
+                        (10, ILThan b j i),
+                        (11, IIfNot b 17),
+                        (12, IMove t f),
+                        (13, IMove f s),
+                        (14, IPlus s t f),
+                        (15, IPlus j j (IntLit 1)),
+                        (16, IGoto 10),
+                        (17, IPlus r r s),
+                        (18, IPlus i i (IntLit 1)),
+                        (19, IGoto 4),
+                        (20, IMove r_ret r),
+                        (21, IRet) ]
+                cfg = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), 
+                            (5 , [6, 20]), (6 , [7]), (7 , [8]), (8 , [9]), 
+                            (9 , [10]), (10 , [11]), (11 , [12, 17]), (12, [13]), 
+                            (13, [14]), (14, [15]), (15, [16]), (16, [10]),
+                            (17, [18]), (18, [19]), (19, [4]), (20, [21])]
+                dft = DM.fromList [(1,[]),(2,[]),(3,[]),(4,[4]),(5,[4]),(6,[4]),(7,[4]),(8,[4]),(9,[4]),(10,[4,10]),(11,[4,10]),(12,[10]),(13,[10]),(14,[10]),(15,[10]),(16,[10]),(17,[4]),(18,[4]),(19,[4]),(20,[]),(21,[])]
+                expected = [4,10]
+                result = dfPlus dft 12
+            in result `shouldBe` expected
+
+        it "test generateE " $ 
+            let input = Temp (AVar "input")
+                x     = Temp (AVar "x") 
+                f     = Temp (AVar "f")
+                s     = Temp (AVar "s")
+                c     = Temp (AVar "c")
+                b     = Temp (AVar "b")
+                i     = Temp (AVar "i")
+                j     = Temp (AVar "j")
+                t     = Temp (AVar "t")
+                r     = Temp (AVar "r")
+                r_ret = Regstr "_r_ret"
+                pa = [
+                        (1, IMove x input),
+                        (2, IMove r (IntLit 0)),
+                        (3, IMove i (IntLit 0)),
+                        (4, ILThan b i x),
+                        (5, IIfNot b 20),
+                        (6, IMove f (IntLit 0)),
+                        (7, IMove s (IntLit 1)),
+                        (8, IMove j (IntLit 0)),
+                        (9, IMove t (IntLit 0)),
+                        (10, ILThan b j i),
+                        (11, IIfNot b 17),
+                        (12, IMove t f),
+                        (13, IMove f s),
+                        (14, IPlus s t f),
+                        (15, IPlus j j (IntLit 1)),
+                        (16, IGoto 10),
+                        (17, IPlus r r s),
+                        (18, IPlus i i (IntLit 1)),
+                        (19, IGoto 4),
+                        (20, IMove r_ret r),
+                        (21, IRet) ]
+                cfg = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), 
+                            (5 , [6, 20]), (6 , [7]), (7 , [8]), (8 , [9]), 
+                            (9 , [10]), (10 , [11]), (11 , [12, 17]), (12, [13]), 
+                            (13, [14]), (14, [15]), (15, [16]), (16, [10]),
+                            (17, [18]), (18, [19]), (19, [4]), (20, [21])]
+                dft = DM.fromList [(1,[]),(2,[]),(3,[]),(4,[4]),(5,[4]),(6,[4]),(7,[4]),(8,[4]),(9,[4]),(10,[4,10]),(11,[4,10]),(12,[10]),(13,[10]),(14,[10]),(15,[10]),(16,[10]),(17,[4]),(18,[4]),(19,[4]),(20,[]),(21,[])]
+                expected = DM.fromList [(4,["b","f","i","j","r","s","t"]),(10,["b","f","j","s","t"])]
+                labelsModdedVars :: [(Label, [String])]
+                labelsModdedVars = map modVars pa
+                result = generateE dft labelsModdedVars
+            in result `shouldBe` expected
 
         it "test insertPhis " $ 
             let input = Temp (AVar "input")
