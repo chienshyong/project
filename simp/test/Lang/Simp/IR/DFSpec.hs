@@ -202,6 +202,169 @@ spec = do
                      |    6 -> 7 -> 8 -> 9 -> 10
                      -------------------------/
         -}
+
+        it "test allsuccessors 3" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = allSuccessors g 3
+                expected = [4,5,6,7,8,9,10,11,12]
+            in result `shouldBe` expected 
+
+        it "test allsuccessors 4" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = allSuccessors g 4
+                expected = [4,5,6,7,8,9,10,11,12]
+            in result `shouldBe` expected 
+
+        it "test childOf 3" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = childOf 3 dt
+                expected = [4]
+            in result `shouldBe` expected 
+
+        it "test allChildren 3" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = allChildren 3 dt
+                expected = [4,5,6,7,8,9,10,11,12]
+            in result `shouldBe` expected 
+
+        it "test allChildren 4" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = allChildren 4 dt
+                expected = [5,6,7,8,9,10,11,12]
+            in result `shouldBe` expected 
+
+        it "test allChildren 5" $ 
+            let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
+                            (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]
+                dt = Node 1 [ 
+                        Node 2 [
+                            Node 3 [
+                                Node 4 [
+                                    Node 5 [
+                                        Node 6 [
+                                            Node 7 [
+                                                Node 8 [
+                                                    Node 9 [
+                                                        Node 10 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        Node 11 [Node 12 []]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                result = allChildren 5 dt
+                expected = [6,7,8,9,10,11,12]
+            in result `shouldBe` expected 
+
         it "test buildDFT 1" $ 
             let g = DM.fromList [(1 , [2]), (2 , [3]), (3 , [4]), (4 , [5]), (5 , [6, 11]), (6 , [7]), (7 , [8]),
                             (8 , [9]), (9 , [10]), (10 , [4]), (11 , [12])]

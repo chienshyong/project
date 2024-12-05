@@ -136,10 +136,40 @@ inOrderTrav Empty = []
 inOrderTrav (Node v children) = v : concatMap inOrderTrav children
 
 
+-- | Return all the successors of a vertex v in a graph.
+allSuccessors :: CFG -> Label -> [Label]
+allSuccessors g v = DS.toList $ explore DS.empty (successors g v)
+  where
+    explore :: DS.Set Label -> [Label] -> DS.Set Label
+    explore visited [] = visited
+    explore visited (x:xs)
+      | x `DS.member` visited = explore visited xs
+      | otherwise = 
+          let newSuccessors = successors g x
+          in explore (DS.insert x visited) (newSuccessors ++ xs)
+
+-- | Return all descendants (children and further down) of a node x in a dominator tree,
+-- excluding x itself and sorted in ascending order.
+allChildren :: Label -> DomTree -> [Label]
+allChildren x dt = sort $ explore [] (childOf x dt)
+  where
+    explore :: [Label] -> [Label] -> [Label]
+    explore visited [] = visited
+    explore visited (y:ys)
+      | y `elem` visited = explore visited ys
+      | otherwise =
+          let newChildren = childOf y dt
+          in explore (y : visited) (newChildren ++ ys)
+
+
 -- | df local implementation from cytron's lemma 2
 -- | Lab 3 Task 1.1 TODO 
+-- set of successors that are not strictly dominated by v.
 dfLocal :: Label -> DomTree -> CFG -> [Label]
-dfLocal = undefined -- fixme
+dfLocal v dt g =
+    let s = successors g v           -- Immediate successors of v
+        dominated = childOf v dt        -- All nodes dominated by v
+    in filter (`notElem` dominated) s   -- Filter successors not dominated by v
 
 -- | Build Dominance frontier table
 buildDFT :: DomTree -> CFG -> DFTable
@@ -150,7 +180,7 @@ buildDFT dt g = foldl go DM.empty (postOrderTrav dt)
             let local  = dfLocal x dt g
                 -- Lab 3 Task 1.1. TODO
                 dfUp :: Label -> [Label]
-                dfUp = undefined -- fixme
+                dfUp child = filter (`notElem` childOf x dt) (fromMaybe [] (DM.lookup child acc)) --(`notElem` childOf x dt)  don't include self or siblings
                 up     = concatMap dfUp (childOf x dt)
             in  DM.insert x (sort (local ++ up)) acc
 -- Lab 3 Task 1.1 end 
