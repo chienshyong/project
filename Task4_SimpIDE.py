@@ -45,14 +45,14 @@ def compile_code():
         return
 
     # Create a temporary file
-    temp_file_path = './temp/temp.simp'  # Get the path to the temporary file
+    temp_file_path = './simp/temp/temp.simp'  # Get the path to the temporary file
     with open(temp_file_path, "w") as file:
         file.write(text_editor.get("1.0", tk.END))
 
     # Run compiler
     log_message("Compiling code and running with argument: " + argument)
     # Path to your Haskell binary file
-    binary_path = "./dist-newstyle/build/x86_64-linux/ghc-9.6.6/simp-0.1.0.0/x/simp/build/simp/simp"
+    binary_path = "./simp/dist-newstyle/build/x86_64-linux/ghc-9.6.6/simp-0.1.0.0/x/simp/build/simp/simp"
 
     if os.name == "nt":  # Windows
         command = ["wsl", binary_path, "-i", temp_file_path, argument]
